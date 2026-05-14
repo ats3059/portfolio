@@ -1,0 +1,13 @@
+package com.commerce.order.domain;
+
+public enum OrderItemStatus {
+    PAYMENT_PENDING,
+    PAYMENT_COMPLETED,
+    PAYMENT_CANCELED_REQUESTED,
+    PAYMENT_CANCELED_CONFIRM,
+    ORDER_CANCELED,
+    SHIPPING,
+    DELIVERED,
+    PURCHASE_DONE,
+    ABORTED
+}
