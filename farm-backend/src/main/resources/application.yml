@@ -1,0 +1,68 @@
+spring:
+  application:
+    name: farm-backend
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/farm_backend?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: farm
+    password: farm
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    defer-datasource-initialization: true
+    open-in-view: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# 동기화 설정
+farm:
+  sync:
+    chunk-size: 100
+
+# resilience4j: 단건 외부 호출 보호
+resilience4j:
+  retry:
+    instances:
+      farmExternalApi:
+        max-attempts: 3
+        wait-duration: 200ms
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        enable-randomized-wait: true
+        randomized-wait-factor: 0.5
+        # 주의: CircuitBreaker 는 @CircuitBreaker AOP 로 외곽에서 fallback 처리됨
+        # (CallNotPermittedException 은 retry 에 도달하지 않음)
+
+  ratelimiter:
+    instances:
+      farmExternalApi:
+        # 단위 시간 호출 수 상한
+        limit-for-period: 1
+        limit-refresh-period: 20ms
+        timeout-duration: 10s
+
+  bulkhead:
+    instances:
+      farmExternalApi:
+        # 동시 호출 수 상한
+        max-concurrent-calls: 3
+        max-wait-duration: 10s
+
+  circuitbreaker:
+    instances:
+      farmExternalApi:
+        # 실패율 / 슬로우 호출 비율로 서킷 OPEN
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 10
+        sliding-window-size: 100
+        wait-duration-in-open-state: 30s
+        slow-call-rate-threshold: 10
+        slow-call-duration-threshold: 5s
+        permitted-number-of-calls-in-half-open-state: 3
+        register-health-indicator: true
+        allow-health-indicator-to-fail: false
